@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define ERROR_15 (0.000000000000001)
+#define ERROR_11 (0.00000000001)
+
+
+int main(int argc, char *argv[]){
+
+	int ret = 0;
+	int stop = 0;
+	FILE *f1 = NULL;
+	FILE *f2 = NULL;
+	long unsigned int line = 1;
+
+	if(argc < 3){
+		fprintf(stderr, "ERROR: Wrong usage.\n");
+		fprintf(stderr, "Usage: %s <file1> <file2> [stop]\n", argv[0]);
+		fprintf(stderr,
+			"\tThis program compares 64 bit floating point numbers stored in a separate\n"
+			"\tline each from <file1> and <file2>. If all the pairs of numbers are the\n"
+			"\tsame up to the 15th decimal place, 0 will be returned. If not, this program\n"
+			"\twill check if all numbers are the same up to the 11th decimal place, and\n"
+			"\tif so 1 will be returned. If [stop] is 1, this program will stop as soon\n"
+			"\tas this happens. If any numbers are not the same up to the 11th decimal\n"
+			"\tplace, 2 will be returned. If [stop] is 2, this program will stop as soon\n"
+			"\tas this happens. If there is an error while executing this program, -1 will\n"
+			"\tbe returned. Compile with -DDEBUG (make debug) or define DEBUG in the program\n"
+			"\tto print debug information.\n"
+		);
+		return -1;
+	}
+
+	if(argc > 3){
+		stop = atoi(argv[3]);
+	}
+
+	f1 = fopen(argv[1], "rb");
+	if(!f1){
+		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[1]);
+		return -1;
+	}
+	f2 = fopen(argv[2], "rb");
+	if(!f1){
+		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[2]);
+		return -1;
+	}
+
+	while(!feof(f1) && !feof(f2)){
+		double d1, d2;
+	
+		if(fscanf(f1, "%lg\n", &d1) != 1){
+			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
+			return -1;
+		}
+		if(fscanf(f2, "%lg\n", &d2) != 1){
+			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
+			return -1;
+		}
+		
+		double error = fabs(d1-d2);
+		if(error >= ERROR_15){
+			if(error < ERROR_11){
+				ret = 1;
+			}else{
+				ret = 2;
+			}
+			if(stop > 0 && stop == ret){
+				goto end;
+			}
+		}
+		line++;
+	}
+
+	if((feof(f1) && !feof(f2)) || (!feof(f1) && feof(f2))){
+		fprintf(stderr, "ERROR: Different number of lines in files '%s' and '%s'.\n", argv[1], argv[2]);
+		return -1;
+	}
+
+end:
+	fclose(f1);
+	fclose(f2);
+
+#ifdef DEBUG
+	printf("%lu lines read\n", line);
+	printf("Return value: %d\n", ret);
+#endif
+
+	return ret;
+}
