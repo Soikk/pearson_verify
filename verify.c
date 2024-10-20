@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]){
 
-	int ret = 0;
+	int ret = -1;
 	int stop = 0;
 	FILE *f1 = NULL;
 	FILE *f2 = NULL;
@@ -26,10 +26,13 @@ int main(int argc, char *argv[]){
 			"\tas this happens. If any numbers are not the same up to the 11th decimal\n"
 			"\tplace, 2 will be returned. If [stop] is 2, this program will stop as soon\n"
 			"\tas this happens. If there is an error while executing this program, -1 will\n"
-			"\tbe returned. Compile with -DDEBUG (make debug) or define DEBUG in the program\n"
+			"\tbe returned, unless the error lies within the files' structures, in which\n"
+			"\tcase 2 will be returned, as it means there was a significant difference in\n"
+			"\tthe outputs. Compile with -DDEBUG (make debug) or define DEBUG in the program\n"
 			"\tto print debug information.\n"
 		);
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	if(argc > 3){
@@ -39,12 +42,14 @@ int main(int argc, char *argv[]){
 	f1 = fopen(argv[1], "rb");
 	if(!f1){
 		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[1]);
-		return -1;
+		ret = -1;
+		goto end;
 	}
 	f2 = fopen(argv[2], "rb");
-	if(!f1){
+	if(!f2){
 		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[2]);
-		return -1;
+		ret = -1;
+		goto end;
 	}
 
 	while(!feof(f1) && !feof(f2)){
@@ -52,11 +57,13 @@ int main(int argc, char *argv[]){
 	
 		if(fscanf(f1, "%lg\n", &d1) != 1){
 			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
-			return -1;
+			ret = 2;
+			goto close_end;
 		}
 		if(fscanf(f2, "%lg\n", &d2) != 1){
 			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
-			return -1;
+			ret = 2;
+			goto close_end;
 		}
 		
 		double error = fabs(d1-d2);
@@ -67,7 +74,7 @@ int main(int argc, char *argv[]){
 				ret = 2;
 			}
 			if(stop > 0 && stop == ret){
-				goto end;
+				goto close_end;
 			}
 		}
 		line++;
@@ -75,13 +82,14 @@ int main(int argc, char *argv[]){
 
 	if((feof(f1) && !feof(f2)) || (!feof(f1) && feof(f2))){
 		fprintf(stderr, "ERROR: Different number of lines in files '%s' and '%s'.\n", argv[1], argv[2]);
-		return -1;
+		ret = 2;
 	}
 
-end:
+close_end:
 	fclose(f1);
 	fclose(f2);
 
+end:
 #ifdef DEBUG
 	printf("%lu lines read\n", line);
 	printf("Return value: %d\n", ret);
