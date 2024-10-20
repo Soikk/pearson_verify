@@ -15,8 +15,9 @@ int main(int argc, char *argv[]){
 	long unsigned int line = 1;
 
 	if(argc < 3){
-		fprintf(stderr, "ERROR: Wrong usage.\n");
-		fprintf(stderr, "Usage: %s <file1> <file2> [stop]\n", argv[0]);
+#ifndef QUIET
+		fprintf(stderr, "ERROR:\tWrong usage.\n");
+		fprintf(stderr, "Usage:\t%s <file1> <file2> [stop]\n", argv[0]);
 		fprintf(stderr,
 			"\tThis program compares 64 bit floating point numbers stored in a separate\n"
 			"\tline each from <file1> and <file2>. If all the pairs of numbers are the\n"
@@ -28,9 +29,12 @@ int main(int argc, char *argv[]){
 			"\tas this happens. If there is an error while executing this program, -1 will\n"
 			"\tbe returned, unless the error lies within the files' structures, in which\n"
 			"\tcase 2 will be returned, as it means there was a significant difference in\n"
-			"\tthe outputs. Compile with -DDEBUG (make debug) or define DEBUG in the program\n"
-			"\tto print debug information.\n"
+			"\tthe outputs. Define DEBUG in the source code or compile with -DDEBUG (or use\n"
+			"\tmake debug) to print debug information. Define QUIET in the source code or\n"
+			"\tcompile with -DQUIET (or use make quiet) to prevent the program from printing\n"
+			"\tanything.\n"
 		);
+#endif
 		ret = -1;
 		goto end;
 	}
@@ -41,13 +45,17 @@ int main(int argc, char *argv[]){
 
 	f1 = fopen(argv[1], "rb");
 	if(!f1){
-		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[1]);
+#ifndef QUIET
+		fprintf(stderr, "ERROR:\tCannot open file '%s'.\n", argv[1]);
+#endif
 		ret = -1;
 		goto end;
 	}
 	f2 = fopen(argv[2], "rb");
 	if(!f2){
-		fprintf(stderr, "ERROR: Cannot open file '%s'.\n", argv[2]);
+#ifndef QUIET
+		fprintf(stderr, "ERROR:\tCannot open file '%s'.\n", argv[2]);
+#endif
 		ret = -1;
 		goto end;
 	}
@@ -56,12 +64,16 @@ int main(int argc, char *argv[]){
 		double d1, d2;
 	
 		if(fscanf(f1, "%lg\n", &d1) != 1){
-			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
+#ifndef QUIET
+			fprintf(stderr, "ERROR:\tCannot read number from file '%s' at line %lu.\n", argv[1], line);
+#endif
 			ret = 2;
 			goto close_end;
 		}
 		if(fscanf(f2, "%lg\n", &d2) != 1){
-			fprintf(stderr, "ERROR: Cannot read number from file '%s' at line %lu.\n", argv[1], line);
+#ifndef QUIET
+			fprintf(stderr, "ERROR:\tCannot read number from file '%s' at line %lu.\n", argv[1], line);
+#endif
 			ret = 2;
 			goto close_end;
 		}
@@ -81,7 +93,9 @@ int main(int argc, char *argv[]){
 	}
 
 	if((feof(f1) && !feof(f2)) || (!feof(f1) && feof(f2))){
-		fprintf(stderr, "ERROR: Different number of lines in files '%s' and '%s'.\n", argv[1], argv[2]);
+#ifndef QUIET
+		fprintf(stderr, "ERROR:\tDifferent number of lines in files '%s' and '%s'.\n", argv[1], argv[2]);
+#endif
 		ret = 2;
 	}
 
@@ -90,9 +104,11 @@ close_end:
 	fclose(f2);
 
 end:
+#ifndef QUIET
 #ifdef DEBUG
 	printf("%lu lines read\n", line);
 	printf("Return value: %d\n", ret);
+#endif
 #endif
 
 	return ret;
