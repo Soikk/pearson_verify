@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 		}
 		if(fscanf(f2, "%lg\n", &d2) != 1){
 #ifndef QUIET
-			fprintf(stderr, "ERROR:\tCannot read number from file '%s' at line %lu.\n", argv[1], line);
+			fprintf(stderr, "ERROR:\tCannot read number from file '%s' at line %lu.\n", argv[2], line);
 #endif
 			ret = 2;
 			goto close_end;
